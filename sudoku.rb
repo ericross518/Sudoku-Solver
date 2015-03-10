@@ -3,21 +3,36 @@
 #import os.path
 #import re
 #from copy import copy, deepcopy
-# Python Sudoku Puzzle Solver for simple Sudoku.  Will not solve difficult or impossible puzzles!
+# Ruby Sudoku Puzzle Solver for simple Sudoku.  Will not solve impossible puzzles!
 #
 # Usage:  ruby sudoku.rb puzzle1.txt
 #
 # Eric Ross - 2014-04-02
 #
+# The initial X's in the data are replaced with zero to keep the possible answer array numeric.
+#
 # The board array is 9x9x10 grid with columns, rows, and possible answers.  The zero position of the
-# possible array contains the answer, the other 9 positions, possible answers. These are eliminated
-# one-by-one by the wipe subroutines, based on correct answers in the same column, row, or 3x3 square.
-# When there is only one possible answer remaining, it's placed in position 0, and the other positions
-# are zeroed out.
+# possible array contains the answer, the other 9 positions, possible answers. For empty squares these
+# are initialized 0 to 9.  For a filled in square, the answer is in position 0, and zeroes are in 
+# positions 1-9.  
 #
-# The initial X's in the data are replaced with zero to keep the possible array numeric.
+# When solving, the possible answers in positions 1-9 are eliminated one-by-one by the wipe subroutines, 
+# based on correct answers in the same column, row, or 3x3 square.  When there is only one possible answer 
+# remaining, it's placed in position 0, and the other positions are zeroed out.
 #
-# Added a check_board at the last minute to verify the answer.
+# The above is sufficient to solve simple puzzles where the answer can be deduced from the initial conditions.
+# However, the solver can get stuck, when after going through everything, it can no longer make progress.
+# At that point it will give up, unless it attempts guessing.
+#
+# Guessing involves testing all the remaining open possibilities by brute force, to see if more progress can
+# can be made.  The board is saved before each guess to it can be recovered if the guess does not result in an 
+# answer.  False guesses may result in partial progress without reaching a final answer.
+#
+# If after guessing, the number of open squares (current) is still not zero, the solver gives up. 
+# If the number of open squares is zero, the problem is solved. 
+#
+# check_board independently verifies the answer by totalling up columns, rows, and 3x3 squares.
+#
 class Sudoku
 
     def solve()
@@ -25,13 +40,13 @@ class Sudoku
         board = initialize_board(input)
         print_board(board)
 
-        current = process(board)
+        open_squares = process(board)
         
-        if current != 0
-            #(current, board) = guess(board)
+        if open_squares != 0
+            (open_squares, board) = guess(board)
         end
             
-        if current == 0
+        if open_squares == 0
             if check_board(board) 
                 puts 'Solved it!'    
             else
